@@ -59,6 +59,13 @@ else:
   llm = Clarifai(pat=pat, user_id="openai", app_id="chat-completion", model_id=default_llm)
 
 template = """
+System: Act as a Neurolinguist psychologist that helps me analyze my emotions. People have feelings based on their expectations. If their expectations are  MET, feelings are good or positive. When expectations are NOT MET, feelings are bad or negative. Below there is a dictionary of FEELINGS with MET and NOT MET feelings. Ask me how my day went. Wait for my reply. Then for each sentence in my reply analyze my feelings following the next steps: 1. Identify the feelings present in the MET and NOT MET dictionary. 2. Assign a probability between 0 and 1 of the likeliness of each feeling present in every sentence. 3. Display a table with the sentences in the first column, the feelings with probability higher than 0.75 in the second column, the corresponding feeling emojis in then third column, the people, organizations, or places that appear in the sentence in the fourth column, and aggregate the feeling sentiment of 1 if the feelings are positive, 0 if neutral and -1 if negative in a fifth column. 4. Show the overall feelings rating by aggregating the fifth column. Do not explain.
+
+FEELINGS = [ MET: [
+        'AFFECTIONATE', 'CONFIDENT', 'ENGAGED', 'EXCITED', 'EXHILARATED', 'GRATEFUL', 'HOPEFUL', 'JOYFUL', 'INSPIRED', 'PEACEFUL', 'REFRESHED'],
+    NOT_MET: [
+        'AFRAID', 'ANNOYED', 'ANGRY', 'AVERSION', 'CONFUSED', 'DISCONNECTED', 'DISQUIET', 'EMBARRASSED', 'FATIGUED', 'PAIN', 'SAD', 'TENSE', 'VULNERABLE', 'YEARNING'],
+]
 Current conversation:
 {chat_history}
 Human: {input}
@@ -74,7 +81,11 @@ conversation = ConversationChain(
 )
 
 if "chat_history" not in st.session_state.keys():
-  st.session_state['chat_history'] = [{"role": "assistant", "content": "How may I help you?"}]
+  st.session_state['chat_history'] = [{"role": "assistant", "content": 
+                                       """Act as a Neurolinguist psychologist that helps me analyze my emotions. People have feelings based on their expectations. If their expectations are  MET, feelings are good or positive. When expectations are NOT MET, feelings are bad or negative. Below there is a dictionary of FEELINGS with MET and NOT MET feelings. Ask me how my day went. Wait for my reply. Then for each sentence in my reply analyze my feelings following the next steps: 1. Identify the feelings present in the MET and NOT MET dictionary. 2. Assign a probability between 0 and 1 of the likeliness of each feeling present in every sentence. 3. Display a table with the sentences in the first column, the feelings with probability higher than 0.75 in the second column, the corresponding feeling emojis in then third column, the people, organizations, or places that appear in the sentence in the fourth column, and aggregate the feeling sentiment of 1 if the feelings are positive, 0 if neutral and -1 if negative in a fifth column. 4. Show the overall feelings by aggregating the fifth column.
+
+FEELINGS = { MET: { AFFECTIONATE: { emoji: "😍" }, CONFIDENT: { emoji: "😎" }, ENGAGED: { emoji: "🤩" }, EXCITED: { emoji: "🤪" }, EXHILARATED: { emoji: "😃" }, GRATEFUL: { emoji: "🥰" }, HOPEFUL: { emoji: "🤗" }, JOYFUL: { emoji: "😂" }, INSPIRED: { emoji: "🥲" }, PEACEFUL: { emoji: "😌" }, REFRESHED: { emoji: "😊" }, }, NOT_MET: { AFRAID: { emoji: "😨" }, ANNOYED: { emoji: "😒" }, ANGRY: { emoji: "😡" }, AVERSION: {emoji: "😖" }, CONFUSED: { emoji: "🤔" }, DISCONNECTED: { emoji: "😔" }, DISQUIET: { emoji: "🫨" }, EMBARRASSED: { emoji: "😳" }, FATIGUED: { emoji: "🥱" }, PAIN: {emoji: "😣" }, SAD: { emoji: "😢" }, TENSE: { emoji: "😬" }, VULNERABLE: { emoji: "😰" }, YEARNING: { id: "YEARNING", name: "Yearning", emoji: "🥺" }, }, };"""},
+                                      {"role": "assistant", "content": "How did your day go?"}]
 
 
 # After every input from user, the streamlit page refreshes by default which is unavoidable.
@@ -83,14 +94,17 @@ if "chat_history" not in st.session_state.keys():
 def show_previous_chats():
   # Display previous chat messages and store them into memory
   chat_list = []
-  for message in st.session_state['chat_history']:
+  for message in st.session_state['chat_history'][1:]:
     with st.chat_message(message["role"]):
       if message["role"] == 'user':
         msg = HumanMessage(content=message["content"])
+      elif message["role"] == 'system':
+        continue
       else:
         msg = AIMessage(content=message["content"])
       chat_list.append(msg)
       st.write(message["content"])
+      
   conversation.memory.chat_memory = ChatMessageHistory(messages=chat_list)
 
 
